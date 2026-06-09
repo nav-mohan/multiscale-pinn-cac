@@ -1,0 +1,79 @@
+# ---------------------------------------------------------------
+# LAMMPS input for 2D triangular LJ lattice without point defect
+# ---------------------------------------------------------------
+
+# Write LAMMPS screen/log output here.
+# The thermo lines in this file contain energy every 100 iterations.
+log relax_2d_energy_without_defect.log
+
+# LJ reduced units: epsilon = 1, sigma = 1, mass = 1
+units lj
+
+# True 2D simulation. LAMMPS requires z-periodicity for dimension 2.
+dimension 2
+
+# Simple atomic particles: id, type, x, y, z
+atom_style atomic
+
+# Finite in x and y, periodic in z as required for dimension 2
+boundary f f p
+
+# Read initial atom positions
+read_data lattice_2d_without_defect.data
+
+# Physical cutoff:
+# nearest neighbor distance = a
+# second neighbor distance  = sqrt(3)*a
+# third neighbor distance   = 2*a
+# rc = 1.9*a includes 1st and 2nd neighbors, excludes 3rd neighbors
+pair_style lj/cut 2.1326778917878086
+pair_coeff 1 1 1.0 1.0 2.1326778917878086
+
+# Neighbor list settings
+neighbor 0.3 bin
+neigh_modify every 1 delay 0 check yes
+
+# Keep system in the xy-plane
+fix keep2d all enforce2d
+
+# ---------------------------------------------------------------
+# Boundary condition groups
+# ---------------------------------------------------------------
+group origin id 1
+group xaxis id 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49
+group yaxis id 99 197 295 393 491 589 687 785 883 981 1079 1177 1275 1373 1471 1569 1667 1765 1863 1961 2059 2157 2255 2353
+
+# ---------------------------------------------------------------
+# Boundary constraints matching the paper
+# origin: fixed in x and y
+# x-axis atoms: constrained in y
+# y-axis atoms: constrained in x
+# ---------------------------------------------------------------
+
+fix fix_origin origin setforce 0.0 0.0 0.0
+fix fix_xaxis xaxis setforce NULL 0.0 0.0
+fix fix_yaxis yaxis setforce 0.0 NULL 0.0
+
+# Print minimization progress every 100 iterations.
+# pe is total potential energy because thermo_modify norm no is used.
+thermo 100
+thermo_style custom step pe fnorm fmax
+thermo_modify norm no
+
+# Start minimization counter at 0
+reset_timestep 0
+
+# Write atom trajectory during minimization
+dump traj all custom 100 relax_2d_traj_without_defect.lammpstrj id type x y z fx fy fz
+dump_modify traj sort id
+
+# Energy minimization
+min_style cg
+minimize 0.0 9.9999999999999998e-13 10000 100000
+
+# Stop trajectory dump
+undump traj
+
+# Write final relaxed configuration.
+# This is the file you should compare against your final PINN coordinates.
+write_dump all custom relaxed_2d_without_defect.dump id type x y z fx fy fz modify sort id
