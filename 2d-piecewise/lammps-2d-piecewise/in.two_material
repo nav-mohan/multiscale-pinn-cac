@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------
+# LAMMPS input for 2D two-material triangular LJ lattice
+# ---------------------------------------------------------------
+
+log two_material.log
+
+units lj
+dimension 2
+atom_style atomic
+boundary f f p
+
+read_data two_material.data
+
+# Pair parameters:
+# type 1 = material A
+# type 2 = material B
+pair_style lj/cut 2.1326778917878086
+pair_coeff 1 1 1.0000000000000000e+00  1.0000000000000000e+00  2.1326778917878086e+00
+pair_coeff 2 2 1.0000000000000001e-01  1.0000000000000000e+00  2.1326778917878086e+00
+pair_coeff 1 2 3.1622776601683794e-01 1.0000000000000000e+00 2.1326778917878086e+00
+
+neighbor 0.3 bin
+neigh_modify every 1 delay 0 check yes
+
+fix keep2d all enforce2d
+
+# ---------------------------------------------------------------
+# Boundary condition groups
+# ---------------------------------------------------------------
+group left_x id 1 99 197 295 393 491 589 687 785 883 981 1079 1177 1275 1373 1471 1569 1667 1765 1863 1961 2059 2157 2255 2353
+group anchor id 1
+group rightwall id 49 98 147 196 245 294 343 392 441 490 539 588 637 686 735 784 833 882 931 980 1029 1078 1127 1176 1225 1274 1323 1372 1421 1470 1519 1568 1617 1666 1715 1764 1813 1862 1911 1960 2009 2058 2107 2156 2205 2254 2303 2352 2401 2450
+
+# ---------------------------------------------------------------
+# Dirichlet constraints
+# ---------------------------------------------------------------
+
+# fix fix_origin origin setforce 0.0 0.0 0.0
+# fix fix_xaxis xaxis setforce NULL 0.0 0.0
+# fix fix_yaxis yaxis setforce 0.0 NULL 0.0
+
+fix fix_left_x left_x setforce 0.0 NULL 0.0
+fix fix_anchor anchor setforce NULL 0.0 0.0
+                
+
+# ---------------------------------------------------------------
+# Neumann loading
+#
+# Constant force per loaded atom:
+#     [1.0000000000000001e-01, 0.0000000000000000e+00]
+#
+# Number of loaded atoms:
+#     50
+#
+# Total applied force:
+#     [5.0000000000000000e+00, 0.0000000000000000e+00]
+# ---------------------------------------------------------------
+
+fix load_right rightwall addforce 1.0000000000000001e-01 0.0000000000000000e+00 0.0
+fix_modify load_right energy yes
+
+thermo 100
+compute pairpe all pe pair
+thermo_style custom step pe c_pairpe fnorm fmax
+thermo_modify norm no
+
+reset_timestep 0
+
+dump traj all custom 100 two_material.dump id type x y z fx fy fz
+dump_modify traj sort id
+
+min_style cg
+minimize 0.0 9.9999999999999998e-13 15000 100000
+
+undump traj
+write_data final_two_material.data

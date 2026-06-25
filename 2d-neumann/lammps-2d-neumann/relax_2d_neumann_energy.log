@@ -1,0 +1,266 @@
+
+# LJ reduced units: epsilon = 1, sigma = 1, mass = 1
+units lj
+
+# True 2D simulation. LAMMPS requires z-periodicity for dimension 2.
+dimension 2
+
+# Simple atomic particles: id, type, x, y, z
+atom_style atomic
+
+# Finite in x and y, periodic in z as required for dimension 2
+boundary f f p
+
+# Read initial atom positions
+read_data ./lammps_2d_input_output/lattice_2d.data
+Reading data file ...
+  orthogonal box = (-5 -5 -10) to (59.439409 52.631952 10)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  2450 atoms
+  read_data CPU = 0.010 seconds
+
+# Physical cutoff:
+# nearest neighbor distance = a
+# second neighbor distance  = sqrt(3)*a
+# third neighbor distance   = 2*a
+# rc = 1.9*a includes 1st and 2nd neighbors if cutoff_factor=1.9
+pair_style lj/cut 2.1326778917878086
+pair_coeff 1 1 1.0 1.0 2.1326778917878086
+
+# Neighbor list settings
+neighbor 0.3 bin
+neigh_modify every 1 delay 0 check yes
+
+# Keep system in the xy-plane
+fix keep2d all enforce2d
+
+# ---------------------------------------------------------------
+# Boundary condition groups
+# ---------------------------------------------------------------
+group origin id 1
+1 atoms in group origin
+group xaxis id 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49
+48 atoms in group xaxis
+group yaxis id 99 197 295 393 491 589 687 785 883 981 1079 1177 1275 1373 1471 1569 1667 1765 1863 1961 2059 2157 2255 2353
+24 atoms in group yaxis
+group rightwall id 49 98 147 196 245 294 343 392 441 490 539 588 637 686 735 784 833 882 931 980 1029 1078 1127 1176 1225 1274 1323 1372 1421 1470 1519 1568 1617 1666 1715 1764 1813 1862 1911 1960 2009 2058 2107 2156 2205 2254 2303 2352 2401 2450
+50 atoms in group rightwall
+
+# ---------------------------------------------------------------
+# Dirichlet boundary constraints
+# origin: fixed in x and y
+# x-axis atoms: constrained in y
+# y-axis atoms: constrained in x
+# ---------------------------------------------------------------
+
+fix fix_origin origin setforce 0.0 0.0 0.0
+fix fix_xaxis xaxis setforce NULL 0.0 0.0
+fix fix_yaxis yaxis setforce 0.0 NULL 0.0
+
+# ---------------------------------------------------------------
+# Neumann boundary condition
+# Constant force-per-atom on right boundary band:
+#     x >= xmax - right_band_width
+#
+# force_per_atom = [1.0000000000000000e-02, 0.0000000000000000e+00]
+# right_band_width = 6.7347722898562379e-01
+# number of loaded atoms = 50
+#
+# This corresponds to the PINN term:
+#     external_work = sum_i f_ext[i] dot u[i]
+#     loss = internal_energy - external_work
+# ---------------------------------------------------------------
+
+fix load_right rightwall addforce 1.0000000000000000e-02 0.0000000000000000e+00 0.0
+fix_modify load_right energy yes
+
+# Print minimization progress every 100 iterations.
+# pe is total potential energy because thermo_modify norm no is used.
+thermo 100
+thermo_style custom step pe fnorm fmax
+thermo_modify norm no
+
+# Start minimization counter at 0
+reset_timestep 0
+
+# Write atom trajectory during minimization
+dump traj all custom 100 ./lammps_2d_input_output/relax_2d_neumann_traj.lammpstrj id type x y z fx fy fz
+dump_modify traj sort id
+
+# Energy minimization
+min_style cg
+minimize 0.0 9.9999999999999998e-13 10000 100000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+
+@Article{Gissinger24,
+ author = {Jacob R. Gissinger, Ilia Nikiforov, Yaser Afshar, Brendon Waters, Moon-ki Choi, Daniel S. Karls, Alexander Stukowski, Wonpil Im, Hendrik Heinz, Axel Kohlmeyer, and Ellad B. Tadmor},
+ title = {Type Label Framework for Bonded Force Fields in LAMMPS},
+ journal = {J. Phys. Chem. B},
+ year =    2024,
+ volume =  128,
+ number =  13,
+ pages =   {3282–-3297}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 2.4326779
+  ghost atom cutoff = 2.4326779
+  binsize = 1.2163389, bins = 53 48 17
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/atomonly/newton
+      stencil: half/bin/2d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 4.186 | 4.186 | 4.186 Mbytes
+   Step         PotEng         Fnorm           Fmax     
+         0  -7689.5046      5.5903428      0.44027575   
+       100  -7698.0904      0.73509475     0.043881494  
+       200  -7698.1509      0.10564174     0.0063718717 
+       300  -7698.152       0.0060504493   0.00039257056
+       400  -7698.152       0.00053303467  2.7386185e-05
+       500  -7698.152       4.7752955e-05  2.523775e-06 
+       600  -7698.152       5.6260552e-06  3.522631e-07 
+       700  -7698.152       2.2892291e-07  1.2368615e-08
+       800  -7698.152       1.850825e-08   1.0959058e-09
+       900  -7698.152       1.2761147e-09  8.7113122e-11
+      1000  -7698.152       7.4617989e-11  4.6320309e-12
+      1100  -7698.152       3.7959441e-11  2.5411292e-12
+      1200  -7698.152       3.3224004e-11  2.3163416e-12
+      1300  -7698.152       3.0786769e-11  2.4883706e-12
+      1400  -7698.152       2.7582778e-11  2.2510327e-12
+      1500  -7698.152       2.4095265e-11  1.5894508e-12
+      1600  -7698.152       1.7209494e-11  1.0567935e-12
+      1700  -7698.152       1.7346745e-11  1.1221718e-12
+      1800  -7698.152       1.7014569e-11  1.272038e-12 
+      1900  -7698.152       1.7886483e-11  1.2928825e-12
+      2000  -7698.152       1.6385964e-11  8.7891031e-13
+      2100  -7698.152       1.621627e-11   7.7221562e-13
+      2200  -7698.152       1.6198033e-11  7.2110373e-13
+      2300  -7698.152       1.6239021e-11  8.7891031e-13
+      2400  -7698.152       1.6221543e-11  7.7221562e-13
+      2500  -7698.152       1.6197378e-11  7.2110373e-13
+      2600  -7698.152       1.6239021e-11  8.7891031e-13
+      2700  -7698.152       1.6221543e-11  7.7221562e-13
+      2800  -7698.152       1.6197378e-11  7.2110373e-13
+      2900  -7698.152       1.6239021e-11  8.7891031e-13
+      3000  -7698.152       1.6221543e-11  7.7221562e-13
+      3100  -7698.152       1.6197378e-11  7.2110373e-13
+      3200  -7698.152       1.6239021e-11  8.7891031e-13
+      3300  -7698.152       1.6221543e-11  7.7221562e-13
+      3400  -7698.152       1.6197378e-11  7.2110373e-13
+      3500  -7698.152       1.6239021e-11  8.7891031e-13
+      3600  -7698.152       1.6221543e-11  7.7221562e-13
+      3700  -7698.152       1.6197378e-11  7.2110373e-13
+      3800  -7698.152       1.6239021e-11  8.7891031e-13
+      3900  -7698.152       1.6221543e-11  7.7221562e-13
+      4000  -7698.152       1.6197378e-11  7.2110373e-13
+      4100  -7698.152       1.6239021e-11  8.7891031e-13
+      4200  -7698.152       1.6221543e-11  7.7221562e-13
+      4300  -7698.152       1.6197378e-11  7.2110373e-13
+      4400  -7698.152       1.6239021e-11  8.7891031e-13
+      4500  -7698.152       1.6221543e-11  7.7221562e-13
+      4600  -7698.152       1.6197378e-11  7.2110373e-13
+      4700  -7698.152       1.6239021e-11  8.7891031e-13
+      4800  -7698.152       1.6221543e-11  7.7221562e-13
+      4900  -7698.152       1.6197378e-11  7.2110373e-13
+      5000  -7698.152       1.6239021e-11  8.7891031e-13
+      5100  -7698.152       1.6221543e-11  7.7221562e-13
+      5200  -7698.152       1.6197378e-11  7.2110373e-13
+      5300  -7698.152       1.6239021e-11  8.7891031e-13
+      5400  -7698.152       1.6221543e-11  7.7221562e-13
+      5500  -7698.152       1.6197378e-11  7.2110373e-13
+      5600  -7698.152       1.6239021e-11  8.7891031e-13
+      5700  -7698.152       1.6221543e-11  7.7221562e-13
+      5800  -7698.152       1.6197378e-11  7.2110373e-13
+      5900  -7698.152       1.6239021e-11  8.7891031e-13
+      6000  -7698.152       1.6221543e-11  7.7221562e-13
+      6100  -7698.152       1.6197378e-11  7.2110373e-13
+      6200  -7698.152       1.6239021e-11  8.7891031e-13
+      6300  -7698.152       1.6221543e-11  7.7221562e-13
+      6400  -7698.152       1.6197378e-11  7.2110373e-13
+      6500  -7698.152       1.6239021e-11  8.7891031e-13
+      6600  -7698.152       1.6221543e-11  7.7221562e-13
+      6700  -7698.152       1.6197378e-11  7.2110373e-13
+      6800  -7698.152       1.6239021e-11  8.7891031e-13
+      6900  -7698.152       1.6221543e-11  7.7221562e-13
+      7000  -7698.152       1.6197378e-11  7.2110373e-13
+      7100  -7698.152       1.6239021e-11  8.7891031e-13
+      7200  -7698.152       1.6221543e-11  7.7221562e-13
+      7300  -7698.152       1.6197378e-11  7.2110373e-13
+      7400  -7698.152       1.6238245e-11  8.7891031e-13
+      7500  -7698.152       1.6223427e-11  7.3202554e-13
+      7600  -7698.152       1.6197213e-11  7.2110373e-13
+      7700  -7698.152       1.6240288e-11  8.7891031e-13
+      7800  -7698.152       1.6243048e-11  7.3202554e-13
+      7900  -7698.152       1.6206602e-11  7.2110373e-13
+      8000  -7698.152       1.6252711e-11  8.7891031e-13
+      8100  -7698.152       1.6243334e-11  7.3202554e-13
+      8200  -7698.152       1.6211464e-11  7.2110373e-13
+      8300  -7698.152       1.6237853e-11  8.7891031e-13
+      8400  -7698.152       1.622607e-11   7.3202554e-13
+      8500  -7698.152       1.6206602e-11  7.2110373e-13
+      8600  -7698.152       1.6252711e-11  8.7891031e-13
+      8700  -7698.152       1.6243334e-11  7.3202554e-13
+      8800  -7698.152       1.6211464e-11  7.2110373e-13
+      8900  -7698.152       1.6237853e-11  8.7891031e-13
+      9000  -7698.152       1.622607e-11   7.3202554e-13
+      9100  -7698.152       1.6206602e-11  7.2110373e-13
+      9200  -7698.152       1.6252711e-11  8.7891031e-13
+      9300  -7698.152       1.6243334e-11  7.3202554e-13
+      9400  -7698.152       1.6211464e-11  7.2110373e-13
+      9500  -7698.152       1.6237853e-11  8.7891031e-13
+      9600  -7698.152       1.622607e-11   7.3202554e-13
+      9700  -7698.152       1.6206602e-11  7.2110373e-13
+      9800  -7698.152       1.6252711e-11  8.7891031e-13
+      9900  -7698.152       1.6243334e-11  7.3202554e-13
+     10000  -7698.152       1.6211464e-11  7.2110373e-13
+Loop time of 9.7312 on 1 procs for 10000 steps with 2450 atoms
+
+99.4% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = max iterations
+  Energy initial, next-to-last, final = 
+     -7689.50463696946  -7698.15201340012  -7698.15201340012
+  Force two-norm initial, final = 5.5903428 1.6211464e-11
+  Force max component initial, final = 0.44027575 7.2110373e-13
+  Final line search alpha, max atom move = 1 7.2110373e-13
+  Iterations, force evaluations = 10000 20000
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 7.7491     | 7.7491     | 7.7491     |   0.0 | 79.63
+Neigh   | 0.0024136  | 0.0024136  | 0.0024136  |   0.0 |  0.02
+Comm    | 0.0024603  | 0.0024603  | 0.0024603  |   0.0 |  0.03
+Output  | 0.72411    | 0.72411    | 0.72411    |   0.0 |  7.44
+Modify  | 0.41821    | 0.41821    | 0.41821    |   0.0 |  4.30
+Other   |            | 0.8349     |            |       |  8.58
+
+Nlocal:           2450 ave        2450 max        2450 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:          21118 ave       21118 max       21118 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 21118
+Ave neighs/atom = 8.6195918
+Neighbor list builds = 7
+Dangerous builds = 0
+
+# Stop trajectory dump
+undump traj
+Total wall time: 0:00:09
