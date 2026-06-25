@@ -33,7 +33,7 @@ MAX_ITER = 10000
 LOG_EVERY = 100
 
 PINN_HISTORY_JSON_FILENAME = (
-    "pinn_history/pinn-history-2d-piecewise-defgrad.json"
+    "pinn-history-2d-piecewise/pinn-history-2d-piecewise-defgrad.json"
 )
 
 MIN_EPOCHS_BEFORE_RECLUSTER = 1000

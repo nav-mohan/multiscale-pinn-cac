@@ -7,7 +7,7 @@ BORDER_LAYERS = 3
 CUTOFF_FACTOR = 1.9
 MAX_ITER = 10000
 LOG_EVERY = 100
-PINN_HISTORY_JSON_FILENAME = "pinn_history/pinn-history-2d-recluster-energyvar.json"
+PINN_HISTORY_JSON_FILENAME = "pinn-history-2d-basic/pinn-history-2d-recluster-energyvar.json"
 
 atom_pos = make_triangular_lattice(NX,NY,LATTICE_SPACING)
 

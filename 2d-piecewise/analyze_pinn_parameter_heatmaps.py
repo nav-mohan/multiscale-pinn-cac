@@ -5,11 +5,11 @@ RESET and non-RESET experiments.
 
 Expected filename forms
 -----------------------
-pinn-history-2d-alloy-neumann-full-IL0-BL1-TRIAL1.json
-pinn-history-2d-alloy-neumann-reduced-IL0-BL1-TRIAL1.json
+pinn-history-2d-piecewise-neumann-full-IL0-BL1-TRIAL1.json
+pinn-history-2d-piecewise-neumann-reduced-IL0-BL1-TRIAL1.json
 
-pinn-history-2d-alloy-neumann-full-IL0-BL1-RESET-TRIAL1.json
-pinn-history-2d-alloy-neumann-reduced-IL0-BL1-RESET-TRIAL1.json
+pinn-history-2d-piecewise-neumann-full-IL0-BL1-RESET-TRIAL1.json
+pinn-history-2d-piecewise-neumann-reduced-IL0-BL1-RESET-TRIAL1.json
 
 The script:
 1. inventories all matching files;
@@ -111,7 +111,7 @@ EPS = 1.0e-14
 
 
 FILENAME_RE = re.compile(
-    r"^pinn-history-2d-alloy-neumann-"
+    r"^pinn-history-2d-piecewise-neumann-"
     r"(?P<kind>full|reduced)-"
     r"IL(?P<interface_layers>\d+)-"
     r"BL(?P<boundary_layers>\d+)-"

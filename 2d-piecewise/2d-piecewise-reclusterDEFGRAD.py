@@ -23,7 +23,7 @@ CUTOFF_FACTOR = 1.9
 MAX_ITER = 10000
 LOG_EVERY = 100
 
-PINN_HISTORY_JSON_FILENAME = "pinn_history/pinn-history-2d-piecewise-reclusterDEFGRAD.json"
+PINN_HISTORY_JSON_FILENAME = "pinn-history-2d-piecewise/pinn-history-2d-piecewise-reclusterDEFGRAD.json"
 MIN_EPOCHS_BEFORE_RECLUSTER = 1000
 RECLUSTER_EVERY = 500
 DEFGRAD_JUMP_TOL = 5.0e-3
