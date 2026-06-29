@@ -2,6 +2,4 @@
 cac_multiscale.txt
 mixture_experts.txt
 .ipynb_checkpoints*
-*.gif
-*.png
 *.json
